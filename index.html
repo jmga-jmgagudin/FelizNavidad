@@ -13,7 +13,7 @@
     * { box-sizing:border-box; }
     body { margin:0; min-height:100svh; overflow:hidden; color:#f9f4e9; font-family:"DM Sans",sans-serif; background:#061923; }
     .night { position:relative; display:grid; min-height:100svh; place-items:center; isolation:isolate; overflow:hidden; background:radial-gradient(ellipse at 52% 26%,#17485a 0%,#0b2c3a 28%,#061923 70%); }
-    .night::before { content:""; position:absolute; inset:0; opacity:.48; background:linear-gradient(115deg,transparent 0 45%,rgba(255,255,255,.035) 46%,transparent 48% 100%), radial-gradient(ellipse at 50% 125%,#031016 20%,transparent 67%); }
+    .night::before { content:""; position:absolute; inset:0; opacity:.48; background:linear-gradient(115deg,transparent 0 45%,rgba(255,255,255,.035) 46%,transparent 48% 100%),radial-gradient(ellipse at 50% 125%,#031016 20%,transparent 67%); }
     .aurora { position:absolute; width:110vmax; height:50vmax; top:-30vmax; left:-25vmax; border-radius:50%; opacity:.28; filter:blur(35px); background:conic-gradient(from 230deg at 50% 100%,transparent,#21606a,transparent 36%,#436448,transparent 55%); transform:rotate(-12deg); animation:drift 16s ease-in-out infinite alternate; }
     .snow { position:absolute; inset:0; pointer-events:none; z-index:-1; }
     .flake { position:absolute; top:-10vh; width:var(--s); height:var(--s); border-radius:50%; background:white; opacity:var(--o); filter:blur(var(--b)); animation:fall var(--d) linear var(--delay) infinite; }
@@ -55,7 +55,7 @@
     @keyframes drift { to { transform:translate(6vw,5vh) rotate(3deg); } }
     @keyframes pulse { 70% { box-shadow:0 0 0 9px rgba(215,181,109,0); } 100% { box-shadow:0 0 0 0 rgba(215,181,109,0); } }
     @keyframes shootAcross { 0% { opacity:0; transform:translate(0,30px) scale(.45); } 8% { opacity:1; } 76% { opacity:1; } 100% { opacity:0; transform:translate(520px,-115px) scale(.8); } }
-    /* En móvil el sobre llega de lado a lado; al abrirse, la tarjeta ocupa la mayor parte de la pantalla. */
+
     @media (max-width:600px) and (min-height:601px) {
       .stage { width:100vw; margin-top:52px; }
       .stage.open .envelope { transform:translateY(20svh) scale(.92); }
@@ -63,15 +63,32 @@
       .stage.open .card { transform:translateY(6svh) rotate(-1.5deg); }
       .card .message { max-width:290px; }
     }
-    @media (max-height:600px) { .intro { top:15px; }.stage { width:min(100vw,460px); margin-top:20px; }.hint,.close { bottom:13px; } }
-    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+
+    @media (max-height:600px) {
+      .intro { top:15px; }
+      .stage { width:min(100vw,460px); margin-top:20px; }
+      .hint,.close { bottom:13px; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; }
+    }
   </style>
 </head>
 <body>
+  <audio id="christmasMusic" preload="auto">
+    <source src="pieza1.mp3" type="audio/mpeg">
+  </audio>
+
   <main class="night">
     <div class="aurora" aria-hidden="true"></div>
     <div class="snow" aria-hidden="true"></div>
-    <div class="intro">Invierno 2026 <span>Hay momentos que merecen ser celebrados</span></div>
+
+    <div class="intro">
+      Invierno 2026
+      <span>Hay momentos que merecen ser celebrados</span>
+    </div>
+
     <div class="stage" id="stage" role="button" tabindex="0" aria-label="Abrir felicitación navideña">
       <div class="envelope">
         <div class="back"></div>
@@ -79,6 +96,7 @@
         <div class="front"></div>
         <div class="seal" aria-hidden="true"></div>
       </div>
+
       <article class="card" aria-live="polite">
         <p class="eyebrow">Con todo nuestro cariño</p>
         <h1>Feliz<br>Navidad</h1>
@@ -88,18 +106,56 @@
         <i class="shooting-star" aria-hidden="true"></i>
       </article>
     </div>
+
     <div class="hint"><i class="dot"></i> Abre tu felicitación</div>
     <button class="close" id="close" type="button">Cerrar el sobre</button>
   </main>
+
   <script>
     const stage = document.querySelector('#stage');
     const close = document.querySelector('#close');
-    const toggle = (open) => { stage.classList.toggle('open', open); stage.setAttribute('aria-label', open ? 'Felicitación abierta' : 'Abrir felicitación navideña'); };
+    const music = document.querySelector('#christmasMusic');
+
+    const toggle = (open) => {
+      stage.classList.toggle('open', open);
+      stage.setAttribute('aria-label', open ? 'Felicitación abierta' : 'Abrir felicitación navideña');
+
+      if (open) {
+        music.currentTime = 0;
+        music.play().catch(() => {});
+      } else {
+        music.pause();
+        music.currentTime = 0;
+      }
+    };
+
     stage.addEventListener('click', () => toggle(true));
-    stage.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(true); } });
+
+    stage.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle(true);
+      }
+    });
+
     close.addEventListener('click', () => toggle(false));
+
     const snow = document.querySelector('.snow');
-    for (let i = 0; i < 55; i++) { const f = document.createElement('i'); f.className = 'flake'; f.style.cssText = `left:${Math.random()*100}%;--s:${1+Math.random()*4}px;--o:${.22+Math.random()*.7};--b:${Math.random()*.8}px;--d:${7+Math.random()*11}s;--delay:-${Math.random()*16}s;--x:${-80+Math.random()*160}px`; snow.appendChild(f); }
+
+    for (let i = 0; i < 55; i++) {
+      const flake = document.createElement('i');
+      flake.className = 'flake';
+      flake.style.cssText = `
+        left:${Math.random() * 100}%;
+        --s:${1 + Math.random() * 4}px;
+        --o:${.22 + Math.random() * .7};
+        --b:${Math.random() * .8}px;
+        --d:${7 + Math.random() * 11}s;
+        --delay:-${Math.random() * 16}s;
+        --x:${-80 + Math.random() * 160}px
+      `;
+      snow.appendChild(flake);
+    }
   </script>
 </body>
 </html>
